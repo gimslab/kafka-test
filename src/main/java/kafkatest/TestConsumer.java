@@ -21,7 +21,7 @@ public class TestConsumer {
 			while (true) {
 
 				System.out.println("poll()...");
-				ConsumerRecords<String, String> records = consumer.poll(30);
+				ConsumerRecords<String, String> records = consumer.poll(100);
 				System.out.println("polled 10 records : " + records.count());
 				
 //				consumer.pause(consumer.assignment());
@@ -31,8 +31,10 @@ public class TestConsumer {
 					System.out.printf("partition = %d, offset = %d, key = %s, value = %s%n",
 										record.partition(), record.offset(), record.key(), record.value());
 					sleep(500);
-					if(record.offset() % 24 == 0)
-						sleep(100);
+					if(record.offset() % 24 == 0) {
+						System.out.println("long waiting...");
+						sleep(10000);
+					}
 				}
 
 				consumer.commitSync();
