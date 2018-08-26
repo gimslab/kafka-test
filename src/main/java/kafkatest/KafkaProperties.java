@@ -31,7 +31,8 @@ public class KafkaProperties {
 
 	private static Properties getBasicProps() {
 		Properties props = new Properties();
-		props.put("bootstrap.servers", "localhost:9092");
+//		props.put("bootstrap.servers", "localhost:9092");
+		props.put("bootstrap.servers", "localhost:9092,localhost:9093,localhost:9094");
 		return props;
 	}
 }
