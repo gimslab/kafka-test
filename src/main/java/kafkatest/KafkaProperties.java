@@ -4,7 +4,7 @@ import java.util.Properties;
 
 public class KafkaProperties {
 
-	public static final String TOPIC = "test2";
+	public static final String TOPIC = "test";
 
 	public static Properties getProducerProps() {
 		Properties props = getBasicProps();

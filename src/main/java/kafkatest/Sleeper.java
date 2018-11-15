@@ -9,4 +9,11 @@ public class Sleeper {
 			e.printStackTrace();
 		}
 	}
+
+	public static void sleepSec(int s) {
+		for (int i = 0; i < s; i++) {
+			System.out.print((i + 1) + " ");
+			sleep(1000);
+		}
+	}
 }
