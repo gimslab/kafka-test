@@ -5,10 +5,16 @@ import static kafkatest.KafkaProperties.getConsumerProps;
 import static kafkatest.Sleeper.sleepSec;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
+import org.apache.kafka.clients.consumer.CommitFailedException;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.PartitionInfo;
+import org.apache.kafka.common.TopicPartition;
 
 public class TestConsumer {
 
@@ -17,16 +23,15 @@ public class TestConsumer {
 
 		if (args.length <1) {
 			println("parm need");
-			println("java TestConsumer warmUpSec sleepSec maxPollIntervalSec sessionTimeOutSec loopCount host");
+			println("java TestConsumer sleepSec maxPollIntervalSec sessionTimeOutSec loopCount host");
 			return;
 		}
 
-		int warmUpSec = Integer.valueOf(args[0]);
-		int sleepSec = Integer.valueOf(args[1]);
-		int maxPollIntervalMs = Integer.valueOf(args[2]) * 1000;
-		int sessionTimeOutMs = Integer.valueOf(args[3]) * 1000;
-		int loopCount = Integer.valueOf(args[4]);
-		String host = args[5];
+		int sleepSec = Integer.valueOf(args[0]);
+		int maxPollIntervalMs = Integer.valueOf(args[1]) * 1000;
+		int sessionTimeOutMs = Integer.valueOf(args[2]) * 1000;
+		int loopCount = Integer.valueOf(args[3]);
+		String host = args[4];
 
 		Properties props = getConsumerProps();
 		props.put("max.poll.interval.ms", maxPollIntervalMs + "");
@@ -36,27 +41,37 @@ public class TestConsumer {
 		try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props)) {
 
 			consumer.subscribe(Arrays.asList(TOPIC));
-			println("start subscribing");
-
-			printf("warming up %s secs.. ", warmUpSec);
-			sleepSec(warmUpSec);
-			println("");
 
 			for (int i = 0; i < loopCount; i++) {
-
-				print("POLL()...");
-				ConsumerRecords<String, String> records = consumer.poll(100);
-				print(" fetched : " + records.count() + " records. ");
-
-				printf("processing.. will take %s secs..", sleepSec);
-				sleepSec(sleepSec);
-				println(" done.");
-
-				consumer.commitSync();
+				if (i == 2) {
+					consumer.pause(consumer.assignment());
+					print("Paused. ");
+				}
+				if (i == 5) {
+					consumer.resume(consumer.assignment());
+					print("Resumed. ");
+				}
+				pollAndProcess(consumer, sleepSec);
 			}
 
-			println("LOOP BROKE. Ctrl+C to stop main()");
+			println("LOOP BROKE. waiting.. Ctrl+C to stop main()");
 			sleepSec(Integer.MAX_VALUE);
+		}
+	}
+
+	private static void pollAndProcess(KafkaConsumer<String, String> consumer, int sleepSec) {
+		print("POLL()...");
+		ConsumerRecords<String, String> records = consumer.poll(100);
+		print(" fetched : " + records.count() + " records. ");
+
+		printf("processing.. will take %s secs..", sleepSec);
+		sleepSec(sleepSec);
+		println(" done.");
+
+		try {
+			consumer.commitSync();
+		} catch (CommitFailedException cfe) {
+			cfe.printStackTrace();
 		}
 	}
 
